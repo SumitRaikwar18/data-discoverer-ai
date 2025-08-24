@@ -94,7 +94,6 @@ export default function ResearchApp({ user, session, onSignOut }: ResearchAppPro
         <main className="flex-1 flex flex-col">
           <div className="border-b bg-card px-6 py-4">
             <div className="flex items-center gap-4">
-              <SidebarTrigger />
               <h1 className="text-xl font-semibold">AI Research Assistant</h1>
             </div>
           </div>
