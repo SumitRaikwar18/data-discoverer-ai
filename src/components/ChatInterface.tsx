@@ -5,8 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Send, Bot, User, Loader2, FlaskConical, FileText, Lightbulb, BarChart3, PenTool } from "lucide-react";
+import { Send, Bot, User, Loader2, FlaskConical, FileText, Lightbulb, BarChart3, PenTool, Download } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import jsPDF from "jspdf";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -130,6 +131,92 @@ export default function ChatInterface({ chatId, messages: initialMessages = [], 
     textareaRef.current?.focus();
   };
 
+  const generatePDF = () => {
+    if (messages.length === 0) {
+      toast({
+        title: "No content",
+        description: "No conversation to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
+      const margin = 20;
+      const lineHeight = 7;
+      let yPosition = margin;
+
+      // Title
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text("AI Research Assistant Conversation", margin, yPosition);
+      yPosition += lineHeight * 2;
+
+      // Date
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, yPosition);
+      yPosition += lineHeight * 2;
+
+      // Messages
+      messages.forEach((message, index) => {
+        // Check if we need a new page
+        if (yPosition > pageHeight - margin) {
+          doc.addPage();
+          yPosition = margin;
+        }
+
+        // Role header
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        const roleText = message.role === 'user' ? 'User:' : 'AI Assistant:';
+        doc.text(roleText, margin, yPosition);
+        yPosition += lineHeight;
+
+        // Message content
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        
+        // Split text to fit page width
+        const textLines = doc.splitTextToSize(
+          message.content, 
+          pageWidth - (margin * 2)
+        );
+        
+        textLines.forEach((line: string) => {
+          if (yPosition > pageHeight - margin) {
+            doc.addPage();
+            yPosition = margin;
+          }
+          doc.text(line, margin, yPosition);
+          yPosition += lineHeight;
+        });
+
+        yPosition += lineHeight; // Extra space between messages
+      });
+
+      // Save the PDF
+      const timestamp = new Date().toISOString().split('T')[0];
+      doc.save(`research-chat-${timestamp}.pdf`);
+
+      toast({
+        title: "PDF Generated",
+        description: "Your conversation has been exported to PDF",
+      });
+
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast({
+        title: "Export Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Messages Area */}
@@ -245,18 +332,31 @@ export default function ChatInterface({ chatId, messages: initialMessages = [], 
             className="min-h-[60px] max-h-[200px] resize-none"
             disabled={isLoading}
           />
-          <Button
-            onClick={() => handleSubmit()}
-            disabled={!input.trim() || isLoading}
-            size="icon"
-            className="w-12 h-12 rounded-lg"
-          >
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
+          <div className="flex flex-col gap-2">
+            {messages.length > 0 && (
+              <Button
+                onClick={generatePDF}
+                variant="outline"
+                size="icon"
+                className="w-12 h-12 rounded-lg"
+                title="Export conversation to PDF"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
             )}
-          </Button>
+            <Button
+              onClick={() => handleSubmit()}
+              disabled={!input.trim() || isLoading}
+              size="icon"
+              className="w-12 h-12 rounded-lg"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

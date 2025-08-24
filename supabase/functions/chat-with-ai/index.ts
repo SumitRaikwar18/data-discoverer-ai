@@ -98,7 +98,7 @@ Always think step-by-step and show your reasoning process for complex scientific
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'openai/gpt-5-mini-2025-08-07',
+        model: 'openai/gpt-5-2025-08-07',
         messages: allMessages,
         max_completion_tokens: 2048,
         stream: false,
