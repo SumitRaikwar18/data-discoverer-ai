@@ -242,14 +242,6 @@ export function ResearchSidebar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem>
-              <User className="w-4 h-4 mr-2" />
-              Profile Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="w-4 h-4 mr-2" />
-              Preferences
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={onSignOut}>
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out

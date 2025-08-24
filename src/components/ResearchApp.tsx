@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ResearchSidebar } from "./ResearchSidebar";
 import ChatInterface from "./ChatInterface";
 import { useToast } from "@/hooks/use-toast";
@@ -93,16 +93,9 @@ export default function ResearchApp({ user, session, onSignOut }: ResearchAppPro
         
         <main className="flex-1 flex flex-col">
           <div className="border-b bg-card px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-semibold">AI Research Assistant</h1>
-                <p className="text-sm text-muted-foreground">
-                  Advanced scientific reasoning powered by GPT-5
-                </p>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Welcome, {user.email}
-              </div>
+            <div className="flex items-center gap-4">
+              <SidebarTrigger />
+              <h1 className="text-xl font-semibold">AI Research Assistant</h1>
             </div>
           </div>
           
