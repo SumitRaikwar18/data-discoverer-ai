@@ -12,7 +12,9 @@ import {
   LogOut, 
   Settings,
   FlaskConical,
-  Brain
+  Brain,
+  PanelLeftClose,
+  PanelLeft
 } from "lucide-react";
 import {
   Sidebar,
@@ -66,7 +68,7 @@ export function ResearchSidebar({
   const [profile, setProfile] = useState<Profile>({});
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
 
   useEffect(() => {
     fetchChats();
@@ -158,25 +160,35 @@ export function ResearchSidebar({
   const isCollapsed = state === "collapsed";
 
   return (
-    <Sidebar className="w-80" collapsible="icon">
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center flex-shrink-0">
-            <Brain className="w-5 h-5 text-white" />
-          </div>
-          {!isCollapsed && (
-            <div>
-              <h1 className="font-bold text-lg">Research AI</h1>
-              <p className="text-xs text-muted-foreground">GPT-5 Assistant</p>
+    <Sidebar className="w-80 bg-gray-900 border-gray-800" collapsible="icon">
+      <SidebarHeader className="p-4 border-b border-gray-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center flex-shrink-0">
+              <Brain className="w-4 h-4 text-white" />
             </div>
-          )}
+            {!isCollapsed && (
+              <div>
+                <h1 className="font-semibold text-white">Research AI</h1>
+                <p className="text-xs text-gray-400">GPT-5 Assistant</p>
+              </div>
+            )}
+          </div>
+          <Button
+            onClick={toggleSidebar}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-800"
+          >
+            {isCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </Button>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
+        <SidebarGroup className="mt-4">
           {!isCollapsed && (
-            <SidebarGroupLabel className="px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <SidebarGroupLabel className="px-4 text-xs font-medium text-gray-400 uppercase tracking-wider">
               Conversations
             </SidebarGroupLabel>
           )}
@@ -184,7 +196,7 @@ export function ResearchSidebar({
             {!isCollapsed && (
               <Button 
                 onClick={onNewChat}
-                className="w-full justify-start gap-2 mb-2"
+                className="w-full justify-start gap-2 mb-2 bg-gray-800 text-white border-gray-700 hover:bg-gray-700"
                 variant="outline"
               >
                 <Plus className="w-4 h-4" />
@@ -195,7 +207,7 @@ export function ResearchSidebar({
             {isCollapsed && (
               <Button 
                 onClick={onNewChat}
-                className="w-10 h-10 p-0 mb-2 mx-auto"
+                className="w-10 h-10 p-0 mb-2 mx-auto bg-gray-800 text-white border-gray-700 hover:bg-gray-700"
                 variant="outline"
                 size="icon"
               >
@@ -210,20 +222,22 @@ export function ResearchSidebar({
                     <SidebarMenuButton
                       onClick={() => onChatSelect(chat.id)}
                       isActive={selectedChatId === chat.id}
-                      className={isCollapsed ? "w-10 h-10 p-0 justify-center" : "w-full justify-between group"}
+                      className={`${isCollapsed ? "w-10 h-10 p-0 justify-center" : "w-full justify-between group"} ${
+                        selectedChatId === chat.id ? "bg-gray-800 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      }`}
                       size={isCollapsed ? "sm" : "default"}
                     >
                       {isCollapsed ? (
-                        <MessageSquare className="w-4 h-4" />
+                        <MessageSquare className="w-4 h-4 text-gray-400" />
                       ) : (
                         <>
                           <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                            <MessageSquare className="w-4 h-4 flex-shrink-0 text-gray-400" />
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium truncate">
                                 {chat.title}
                               </p>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-xs text-gray-500">
                                 {formatDate(chat.updated_at)}
                               </p>
                             </div>
@@ -231,7 +245,7 @@ export function ResearchSidebar({
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white"
                             onClick={(e) => deleteChat(chat.id, e)}
                           >
                             <Trash2 className="w-3 h-3" />
@@ -247,23 +261,22 @@ export function ResearchSidebar({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
-        <Separator className="mb-4" />
+      <SidebarFooter className="p-4 border-t border-gray-800">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className={isCollapsed ? "w-10 h-10 p-0" : "w-full justify-start gap-3 p-2"}>
+            <Button variant="ghost" className={`${isCollapsed ? "w-10 h-10 p-0" : "w-full justify-start gap-3 p-2"} text-gray-300 hover:bg-gray-800 hover:text-white`}>
               <Avatar className="w-8 h-8 flex-shrink-0">
-                <AvatarFallback className="text-xs">
+                <AvatarFallback className="text-xs bg-gray-700 text-gray-300">
                   {profile.full_name?.charAt(0) || profile.email?.charAt(0) || <User className="w-4 h-4" />}
                 </AvatarFallback>
               </Avatar>
               {!isCollapsed && (
                 <div className="text-left min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">
+                  <p className="text-sm font-medium truncate text-white">
                     {profile.full_name || profile.email || 'User'}
                   </p>
                   {profile.institution && (
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="text-xs text-gray-400 truncate">
                       {profile.institution}
                     </p>
                   )}
@@ -271,8 +284,8 @@ export function ResearchSidebar({
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={onSignOut}>
+          <DropdownMenuContent align="end" className="w-56 bg-gray-800 border-gray-700">
+            <DropdownMenuItem onClick={onSignOut} className="text-gray-300 hover:bg-gray-700 hover:text-white">
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
             </DropdownMenuItem>
