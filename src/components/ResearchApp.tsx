@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { ResearchSidebar } from "./ResearchSidebar";
 import ChatInterface from "./ChatInterface";
 import { useToast } from "@/hooks/use-toast";
@@ -83,7 +83,7 @@ export default function ResearchApp({ user, session, onSignOut }: ResearchAppPro
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-background">
+      <div className="flex min-h-screen w-full bg-background">
         <ResearchSidebar
           selectedChatId={selectedChatId}
           onChatSelect={handleChatSelect}
@@ -91,8 +91,8 @@ export default function ResearchApp({ user, session, onSignOut }: ResearchAppPro
           onSignOut={handleSignOut}
         />
         
-        <main className="flex-1 flex flex-col">
-          <div className="border-b bg-card px-6 py-4">
+        <main className="flex-1 flex flex-col min-h-screen">
+          <div className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur-sm px-6 py-4">
             <div className="flex items-center gap-4">
               <h1 className="text-xl font-semibold">AI Research Assistant</h1>
             </div>

@@ -84,7 +84,12 @@ export default function ChatInterface({ chatId, messages: initialMessages = [], 
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('chat-with-ai', {
+      // Add timeout for better error handling
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 30000)
+      );
+
+      const requestPromise = supabase.functions.invoke('chat-with-ai', {
         body: {
           messages: [...messages, userMessage],
           chatId,
@@ -92,8 +97,14 @@ export default function ChatInterface({ chatId, messages: initialMessages = [], 
         },
       });
 
+      const { data, error } = await Promise.race([requestPromise, timeoutPromise]);
+
       if (error) throw error;
 
+      // Validate response data
+      if (!data || !data.response) {
+        throw new Error('Invalid response from AI service');
+      }
       const assistantMessage: Message = {
         role: 'assistant',
         content: data.response,
@@ -109,9 +120,21 @@ export default function ChatInterface({ chatId, messages: initialMessages = [], 
 
     } catch (error: any) {
       console.error('Chat error:', error);
+      
+      // Remove the user message if there was an error
+      setMessages(prev => prev.slice(0, -1));
+      
+      // Provide specific error messages
+      let errorMessage = "Failed to send message. Please try again.";
+      if (error.message === 'Request timeout') {
+        errorMessage = "Request timed out. Please check your connection and try again.";
+      } else if (error.message?.includes('Invalid response')) {
+        errorMessage = "Received invalid response from AI service. Please try again.";
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to send message. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

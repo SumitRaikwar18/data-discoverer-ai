@@ -13,8 +13,8 @@ import {
   Settings,
   FlaskConical,
   Brain,
-  PanelLeftClose,
-  PanelLeft
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import {
   Sidebar,
@@ -160,9 +160,10 @@ export function ResearchSidebar({
   const isCollapsed = state === "collapsed";
 
   return (
-    <Sidebar className="w-80" collapsible="icon">
+    <div className="relative">
+      <Sidebar className="w-80 sticky top-0 h-screen" collapsible="icon">
       <SidebarHeader className="p-4 border-b">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center flex-shrink-0">
               <Brain className="w-4 h-4 text-white" />
@@ -174,14 +175,6 @@ export function ResearchSidebar({
               </div>
             )}
           </div>
-          <Button
-            onClick={toggleSidebar}
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-          >
-            {isCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-          </Button>
         </div>
       </SidebarHeader>
 
@@ -210,12 +203,13 @@ export function ResearchSidebar({
                 className="w-10 h-10 p-0 mb-2 mx-auto"
                 variant="outline"
                 size="icon"
+                title="New Research Chat"
               >
                 <Plus className="w-4 h-4" />
               </Button>
             )}
 
-            <ScrollArea className="h-[400px]">
+            <ScrollArea className="h-[calc(100vh-300px)]">
               <SidebarMenu>
                 {chats.map((chat) => (
                   <SidebarMenuItem key={chat.id}>
@@ -224,6 +218,7 @@ export function ResearchSidebar({
                       isActive={selectedChatId === chat.id}
                       className={isCollapsed ? "w-10 h-10 p-0 justify-center" : "w-full justify-between group"}
                       size={isCollapsed ? "sm" : "default"}
+                      title={isCollapsed ? chat.title : undefined}
                     >
                       {isCollapsed ? (
                         <MessageSquare className="w-4 h-4" />
@@ -233,21 +228,24 @@ export function ResearchSidebar({
                             <MessageSquare className="w-4 h-4 flex-shrink-0" />
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium truncate">
-                                {chat.title}
+                                {chat.title.split(' ').slice(0, 4).join(' ')}
+                                {chat.title.split(' ').length > 4 && '...'}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 {formatDate(chat.updated_at)}
                               </p>
                             </div>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => deleteChat(chat.id, e)}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
+                          {!isCollapsed && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => deleteChat(chat.id, e)}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          )}
                         </>
                       )}
                     </SidebarMenuButton>
@@ -291,5 +289,17 @@ export function ResearchSidebar({
         </DropdownMenu>
       </SidebarFooter>
     </Sidebar>
+      
+      {/* Sidebar Toggle Button - Positioned on the right edge */}
+      <Button
+        onClick={toggleSidebar}
+        variant="outline"
+        size="icon"
+        className="absolute -right-4 top-4 z-50 h-8 w-8 rounded-full bg-background border shadow-md hover:shadow-lg transition-all duration-200"
+        title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+      </Button>
+    </div>
   );
 }

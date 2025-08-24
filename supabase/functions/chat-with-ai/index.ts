@@ -25,6 +25,10 @@ serve(async (req) => {
   }
 
   try {
+    // Add request timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -40,6 +44,7 @@ serve(async (req) => {
     } = await supabaseClient.auth.getUser();
 
     if (!user) {
+      clearTimeout(timeoutId);
       return new Response('Unauthorized', { 
         status: 401, 
         headers: corsHeaders 
@@ -50,6 +55,7 @@ serve(async (req) => {
     const aimlApiKey = Deno.env.get('AIML_API_KEY');
 
     if (!aimlApiKey) {
+      clearTimeout(timeoutId);
       throw new Error('AI/ML API key not configured');
     }
 
@@ -102,8 +108,12 @@ Always think step-by-step and show your reasoning process for complex scientific
         messages: allMessages,
         max_completion_tokens: 2048,
         stream: false,
+        temperature: 0.7,
       }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorData = await response.text();
@@ -112,7 +122,17 @@ Always think step-by-step and show your reasoning process for complex scientific
     }
 
     const data = await response.json();
+    
+    // Validate AI response
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Invalid AI response format');
+    }
+    
     const aiResponse = data.choices[0].message.content;
+    
+    if (!aiResponse || aiResponse.trim().length === 0) {
+      throw new Error('Empty AI response');
+    }
 
     // Create or update chat
     let currentChatId = chatId;
@@ -136,19 +156,29 @@ Always think step-by-step and show your reasoning process for complex scientific
       currentChatId = newChat.id;
     }
 
-    // Save user message
-    await supabaseClient.from('messages').insert({
+    // Save user message with error handling
+    const { error: userMessageError } = await supabaseClient.from('messages').insert({
       chat_id: currentChatId,
       role: 'user',
       content: messages[messages.length - 1].content,
     });
 
-    // Save AI response
-    await supabaseClient.from('messages').insert({
+    if (userMessageError) {
+      console.error('Error saving user message:', userMessageError);
+      throw new Error('Failed to save user message');
+    }
+
+    // Save AI response with error handling
+    const { error: aiMessageError } = await supabaseClient.from('messages').insert({
       chat_id: currentChatId,
       role: 'assistant',
       content: aiResponse,
     });
+
+    if (aiMessageError) {
+      console.error('Error saving AI message:', aiMessageError);
+      throw new Error('Failed to save AI response');
+    }
 
     return new Response(
       JSON.stringify({
@@ -161,12 +191,29 @@ Always think step-by-step and show your reasoning process for complex scientific
     );
   } catch (error) {
     console.error('Error in chat-with-ai function:', error);
+    
+    // Provide more specific error responses
+    let statusCode = 500;
+    let errorMessage = 'Internal server error';
+    
+    if (error.name === 'AbortError') {
+      statusCode = 408;
+      errorMessage = 'Request timeout';
+    } else if (error.message?.includes('AI/ML API error')) {
+      statusCode = 502;
+      errorMessage = 'AI service unavailable';
+    } else if (error.message?.includes('Invalid AI response') || error.message?.includes('Empty AI response')) {
+      statusCode = 502;
+      errorMessage = 'Invalid AI response';
+    }
+    
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Internal server error' 
+        error: errorMessage,
+        details: error.message
       }),
       {
-        status: 500,
+        status: statusCode,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
