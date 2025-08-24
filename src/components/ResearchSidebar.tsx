@@ -25,6 +25,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -65,6 +66,7 @@ export function ResearchSidebar({
   const [profile, setProfile] = useState<Profile>({});
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { state } = useSidebar();
 
   useEffect(() => {
     fetchChats();
@@ -153,34 +155,53 @@ export function ResearchSidebar({
     return date.toLocaleDateString();
   };
 
+  const isCollapsed = state === "collapsed";
+
   return (
-    <Sidebar className="w-80">
+    <Sidebar className="w-80" collapsible="icon">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center flex-shrink-0">
             <Brain className="w-5 h-5 text-white" />
           </div>
-          <div>
-            <h1 className="font-bold text-lg">Research AI</h1>
-            <p className="text-xs text-muted-foreground">GPT-5 Assistant</p>
-          </div>
+          {!isCollapsed && (
+            <div>
+              <h1 className="font-bold text-lg">Research AI</h1>
+              <p className="text-xs text-muted-foreground">GPT-5 Assistant</p>
+            </div>
+          )}
         </div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Conversations
-          </SidebarGroupLabel>
+          {!isCollapsed && (
+            <SidebarGroupLabel className="px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Conversations
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent className="px-2">
-            <Button 
-              onClick={onNewChat}
-              className="w-full justify-start gap-2 mb-2"
-              variant="outline"
-            >
-              <Plus className="w-4 h-4" />
-              New Research Chat
-            </Button>
+            {!isCollapsed && (
+              <Button 
+                onClick={onNewChat}
+                className="w-full justify-start gap-2 mb-2"
+                variant="outline"
+              >
+                <Plus className="w-4 h-4" />
+                New Research Chat
+              </Button>
+            )}
+
+            {isCollapsed && (
+              <Button 
+                onClick={onNewChat}
+                className="w-10 h-10 p-0 mb-2 mx-auto"
+                variant="outline"
+                size="icon"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            )}
 
             <ScrollArea className="h-[400px]">
               <SidebarMenu>
@@ -189,27 +210,34 @@ export function ResearchSidebar({
                     <SidebarMenuButton
                       onClick={() => onChatSelect(chat.id)}
                       isActive={selectedChatId === chat.id}
-                      className="w-full justify-between group"
+                      className={isCollapsed ? "w-10 h-10 p-0 justify-center" : "w-full justify-between group"}
+                      size={isCollapsed ? "sm" : "default"}
                     >
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <MessageSquare className="w-4 h-4 flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">
-                            {chat.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(chat.updated_at)}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => deleteChat(chat.id, e)}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                      {isCollapsed ? (
+                        <MessageSquare className="w-4 h-4" />
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium truncate">
+                                {chat.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDate(chat.updated_at)}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => deleteChat(chat.id, e)}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -223,22 +251,24 @@ export function ResearchSidebar({
         <Separator className="mb-4" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="w-full justify-start gap-3 p-2">
-              <Avatar className="w-8 h-8">
+            <Button variant="ghost" className={isCollapsed ? "w-10 h-10 p-0" : "w-full justify-start gap-3 p-2"}>
+              <Avatar className="w-8 h-8 flex-shrink-0">
                 <AvatarFallback className="text-xs">
                   {profile.full_name?.charAt(0) || profile.email?.charAt(0) || <User className="w-4 h-4" />}
                 </AvatarFallback>
               </Avatar>
-              <div className="text-left min-w-0 flex-1">
-                <p className="text-sm font-medium truncate">
-                  {profile.full_name || profile.email || 'User'}
-                </p>
-                {profile.institution && (
-                  <p className="text-xs text-muted-foreground truncate">
-                    {profile.institution}
+              {!isCollapsed && (
+                <div className="text-left min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">
+                    {profile.full_name || profile.email || 'User'}
                   </p>
-                )}
-              </div>
+                  {profile.institution && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {profile.institution}
+                    </p>
+                  )}
+                </div>
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
